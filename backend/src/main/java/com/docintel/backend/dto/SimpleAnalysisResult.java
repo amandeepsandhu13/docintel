@@ -5,31 +5,38 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @Schema(description = "DTO representing a document analysis request")
-public class SimpleAnalysisResult {
+public class SimpleAnalysisResult {   private String content;  // Full extracted text from document
+    private List<KeyValue> keyValuePairs;
+    private List<Table> tables;
 
-    @Schema(description = "Customer name extracted from document")
-    private String customerName;
+    // Getters and setters
 
-    @Schema(description = "Invoice number extracted from document")
-    private String invoiceNumber;
+    public String getContent() {
+        return content;
+    }
 
-    @Schema(description = "Total amount extracted from document")
-    private Double totalAmount;
+    public void setContent(String content) {
+        this.content = content;
+    }
 
-    @Schema(description = "Invoice date extracted from document")
-    private String invoiceDate;
+    public List<KeyValue> getKeyValuePairs() {
+        return keyValuePairs;
+    }
 
-    @Schema(description = "Due date extracted from document")
-    private String dueDate;
+    public void setKeyValuePairs(List<KeyValue> keyValuePairs) {
+        this.keyValuePairs = keyValuePairs;
+    }
 
-    public SimpleAnalysisResult(String customerName, String invoiceNumber, Double totalAmount, String invoiceDate, String dueDate) {
-        this.customerName = customerName;
-        this.invoiceNumber = invoiceNumber;
-        this.totalAmount = totalAmount;
-        this.invoiceDate = invoiceDate;
-        this.dueDate = dueDate;
+    public List<Table> getTables() {
+        return tables;
+    }
+
+    public void setTables(List<Table> tables) {
+        this.tables = tables;
     }
 }

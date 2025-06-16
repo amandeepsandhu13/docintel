@@ -26,75 +26,68 @@ public class DocumentAnalysisService {
         this.restTemplate = restTemplate;
     }
 
-    // Submit document bytes to Form Recognizer and get operation-location URL for polling
-    public String submitDocumentForAnalysis(MultipartFile file) throws Exception {
-        String url = endpoint + "/formrecognizer/documentModels/prebuilt-document:analyze?api-version=2023-07-31";
+
+    // Upload file to Azure Form Recognizer prebuilt-document analyze endpoint
+    public String submitDocument(byte[] fileBytes, String modelType) {
+        String model = modelType.equalsIgnoreCase("invoice") ? "prebuilt-invoice" : "prebuilt-document";
+
+        String url = endpoint + "/formrecognizer/documentModels/" + model + ":analyze?api-version=2023-07-31";
 
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Ocp-Apim-Subscription-Key", apikey);
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.set("Ocp-Apim-Subscription-Key", apikey);
 
-        HttpEntity<byte[]> entity = new HttpEntity<>(file.getBytes(), headers);
+        HttpEntity<byte[]> entity = new HttpEntity<>(fileBytes, headers);
 
         ResponseEntity<Void> response = restTemplate.exchange(url, HttpMethod.POST, entity, Void.class);
 
         if (response.getStatusCode() == HttpStatus.ACCEPTED) {
-            String operationLocation = response.getHeaders().getFirst("operation-location");
-            if (operationLocation == null) {
-                throw new Exception("Missing operation-location header");
-            }
-            return operationLocation;
+            // Operation-Location URL to poll later
+            return response.getHeaders().getFirst("operation-location");
         } else {
-            throw new Exception("Failed to submit document for analysis: " + response.getStatusCode());
+            throw new RuntimeException("Failed to submit document for analysis: " + response.getStatusCode());
         }
     }
 
-    // Poll operationLocation URL until result is ready or failed, return parsed SimpleAnalysisResult
-    public SimpleAnalysisResult pollForResult(String operationLocation) throws Exception {
+    // Poll operation-location URL until result is ready, return parsed result
+    public SimpleAnalysisResult pollForResult(String operationLocation) throws InterruptedException {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Ocp-Apim-Subscription-Key", apikey);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
         int maxRetries = 5;
         int retryCount = 0;
-        int delayMs = 5000;
 
         while (retryCount < maxRetries) {
             ResponseEntity<String> response = restTemplate.exchange(operationLocation, HttpMethod.GET, entity, String.class);
-            System.out.println("waiting... at step 1");
+
             if (response.getStatusCode() == HttpStatus.OK) {
                 String body = response.getBody();
 
                 if (body.contains("\"status\":\"succeeded\"")) {
-                    System.out.println("waiting... at step 2");
-                    // Parse JSON and return DTO
-                    try {
+                    // Parse JSON into DTO and return
+                    try{
                         return DocumentParserUtil.parse(body);
                     }catch (Exception e){
-                        e.printStackTrace();
-                        throw new RuntimeException("Parsing failed: " + e.getMessage());
+                        System.out.println(e.getMessage());
                     }
                 } else if (body.contains("\"status\":\"failed\"")) {
-                    System.out.println("waiting... at step 3");
-                    throw new Exception("Document analysis failed: " + body);
+                    throw new RuntimeException("Document analysis failed: " + body);
                 } else {
-                    System.out.println("waiting... at step 4");
-                    // Still running, wait and retry
-                    Thread.sleep(delayMs);
+                    // Still running, wait before retry
+                    Thread.sleep(50000);
                     retryCount++;
-                    delayMs *= 2; // exponential backoff
                 }
             } else if (response.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
-                System.out.println("waiting... at step 5");
-                // Rate limit hit - wait longer
-                Thread.sleep(60000);
+                // Rate limited - wait longer
+                Thread.sleep(600000);
                 retryCount++;
             } else {
-                throw new Exception("Unexpected response: " + response.getStatusCode());
+                throw new RuntimeException("Unexpected response status: " + response.getStatusCode());
             }
         }
-        throw new Exception("Exceeded max retries waiting for analysis result");
+
+        throw new RuntimeException("Max retries exceeded waiting for analysis result");
     }
 }
