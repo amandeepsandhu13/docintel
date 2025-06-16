@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 @Schema(description = "DTO representing a document analysis request")
 public class SimpleAnalysisResult {
 
