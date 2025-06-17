@@ -67,5 +67,7 @@ public class DocumentParserUtil {public static SimpleAnalysisResult parse(String
     result.setTables(tables);
 
     return result;
-}
+  }
+
+
 }

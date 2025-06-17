@@ -7,15 +7,24 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+
+@Schema(description = "DTO representing a document analysis result")
 @Data
-@NoArgsConstructor
-@Schema(description = "DTO representing a document analysis request")
-public class SimpleAnalysisResult {   private String content;  // Full extracted text from document
+public class SimpleAnalysisResult {
+    @Schema(description = "Full extracted text from document")
+    private String content;
+
+    @Schema(description = "Extracted key-value pairs from the document")
     private List<KeyValue> keyValuePairs;
+
+    @Schema(description = "Extracted tables from the document")
     private List<Table> tables;
 
-    // Getters and setters
+    @Schema(description = "Chunks of the document content for better context splitting")
+    private List<Chunk> chunks;
 
+
+    // Getter and Setter for content
     public String getContent() {
         return content;
     }
@@ -24,6 +33,7 @@ public class SimpleAnalysisResult {   private String content;  // Full extracted
         this.content = content;
     }
 
+    // Getter and Setter for keyValuePairs
     public List<KeyValue> getKeyValuePairs() {
         return keyValuePairs;
     }
@@ -32,6 +42,7 @@ public class SimpleAnalysisResult {   private String content;  // Full extracted
         this.keyValuePairs = keyValuePairs;
     }
 
+    // Getter and Setter for tables
     public List<Table> getTables() {
         return tables;
     }
@@ -39,4 +50,15 @@ public class SimpleAnalysisResult {   private String content;  // Full extracted
     public void setTables(List<Table> tables) {
         this.tables = tables;
     }
+
+    // Getter and Setter for chunks
+    public List<Chunk> getChunks() {
+        return chunks;
+    }
+
+    public void setChunks(List<Chunk> chunks) {
+        this.chunks = chunks;
+    }
+
+
 }

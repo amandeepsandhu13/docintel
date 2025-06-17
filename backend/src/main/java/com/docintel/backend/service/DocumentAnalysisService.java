@@ -22,10 +22,12 @@ public class DocumentAnalysisService {
     @Value("${azure.formrecognizer.apikey}")
     private String apikey;
 
+    @Autowired
+    private AdaptiveChunkingService adaptiveChunkingService;
+
     public DocumentAnalysisService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
-
 
     // Upload file to Azure Form Recognizer prebuilt-document analyze endpoint
     public String submitDocument(byte[] fileBytes, String modelType) {
@@ -66,28 +68,35 @@ public class DocumentAnalysisService {
                 String body = response.getBody();
 
                 if (body.contains("\"status\":\"succeeded\"")) {
-                    // Parse JSON into DTO and return
-                    try{
-                        return DocumentParserUtil.parse(body);
-                    }catch (Exception e){
-                        System.out.println(e.getMessage());
+                    try {
+                        //  Parse JSON into DTO
+                        SimpleAnalysisResult result = DocumentParserUtil.parse(body);
+
+                        //  Add adaptive chunks from content
+                        if (result.getContent() != null && !result.getContent().isEmpty()) {
+                            result.setChunks(adaptiveChunkingService.chunkDocument(result.getContent()));
+                        }
+
+                        return result;
+                    } catch (Exception e) {
+                        throw new RuntimeException("Error parsing result: " + e.getMessage(), e);
                     }
+
                 } else if (body.contains("\"status\":\"failed\"")) {
                     throw new RuntimeException("Document analysis failed: " + body);
                 } else {
-                    // Still running, wait before retry
-                    Thread.sleep(50000);
+                    Thread.sleep(5000);  // Retry delay
                     retryCount++;
                 }
+
             } else if (response.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
-                // Rate limited - wait longer
-                Thread.sleep(600000);
+                Thread.sleep(10000);
                 retryCount++;
             } else {
-                throw new RuntimeException("Unexpected response status: " + response.getStatusCode());
+                throw new RuntimeException("Unexpected response: " + response.getStatusCode());
             }
         }
 
-        throw new RuntimeException("Max retries exceeded waiting for analysis result");
+        throw new RuntimeException("Max retries exceeded while polling for analysis result.");
     }
 }
