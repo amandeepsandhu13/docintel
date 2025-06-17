@@ -18,64 +18,71 @@ public class DocumentParserUtil {
     String fullContent = analyzeResult.path("content").asText("");
 
     // Parse key-value pairs
-    List<KeyValue> keyValues = new ArrayList<>();
-    JsonNode kvPairsNode = analyzeResult.path("keyValuePairs");
-    if (kvPairsNode.isArray()) {
-        for (JsonNode kvNode : kvPairsNode) {
-            String key = FormRecognizerUtils.extractContent(kvNode.path("key"));
-            String value = FormRecognizerUtils.extractContent(kvNode.path("value"));
+        List<KeyValue> keyValues = new ArrayList<>();
+        Set<String> extractedValues = new HashSet<>();
+        JsonNode kvPairsNode = analyzeResult.path("keyValuePairs");
+        // 💡 Refined key-value parsing
+        if (kvPairsNode.isArray()) {
+            for (JsonNode kvNode : kvPairsNode) {
+                String key = FormRecognizerUtils.extractContent(kvNode.path("key"));
+                String value = FormRecognizerUtils.extractContent(kvNode.path("value"));
 
-           // String key = kvNode.path("key").path("content").asText(null);
-            //String value = kvNode.path("value").path("content").asText(null);
-            if (key != null && value != null) {
-                KeyValue kv = new KeyValue();
-                kv.setKey(key);
-                kv.setValue(value);
-                keyValues.add(kv);
+                if (key != null) key = key.trim().replaceAll("[:\\-\\s]+$", "");
+                if (value != null) value = value.trim().replaceAll("^[:\\-\\s]+", "");
+
+                if (key != null && value != null && !key.isEmpty() && !value.isEmpty()) {
+                    KeyValue kv = new KeyValue();
+                    kv.setKey(key);
+                    kv.setValue(value);
+                    keyValues.add(kv);
+                    extractedValues.add(key);
+                    extractedValues.add(value);
+                }
             }
         }
-    }
 
-    // Parse tables
-    List<Table> tables = new ArrayList<>();
-    Set<String> extractedValues = new HashSet<>();
-    JsonNode tablesNode = analyzeResult.path("tables");
-    if (tablesNode.isArray()) {
-        for (JsonNode tableNode : tablesNode) {
-            List<List<String>> rows = new ArrayList<>();
-            int rowCount = tableNode.path("rowCount").asInt(0);
-            int colCount = tableNode.path("columnCount").asInt(0);
+        // 📊 Parse tables
+        List<Table> tables = new ArrayList<>();
+        JsonNode tablesNode = analyzeResult.path("tables");
 
-            // Initialize empty 2D list of strings for table cells
-            for (int i = 0; i < rowCount; i++) {
-                rows.add(new ArrayList<>(Collections.nCopies(colCount, "")));
+        if (tablesNode.isArray()) {
+            for (JsonNode tableNode : tablesNode) {
+                List<List<String>> rows = new ArrayList<>();
+                int rowCount = tableNode.path("rowCount").asInt(0);
+                int colCount = tableNode.path("columnCount").asInt(0);
+
+                for (int i = 0; i < rowCount; i++) {
+                    rows.add(new ArrayList<>(Collections.nCopies(colCount, "")));
+                }
+
+                JsonNode cellsNode = tableNode.path("cells");
+                for (JsonNode cell : cellsNode) {
+                    int rowIndex = cell.path("rowIndex").asInt();
+                    int colIndex = cell.path("columnIndex").asInt();
+                    String text = cell.path("content").asText("");
+                    rows.get(rowIndex).set(colIndex, text);
+                    extractedValues.add(text); // Also track table content
+                }
+
+                Table table = new Table();
+                table.setRows(rows);
+                tables.add(table);
             }
-
-            JsonNode cellsNode = tableNode.path("cells");
-            for (JsonNode cell : cellsNode) {
-                int rowIndex = cell.path("rowIndex").asInt();
-                int colIndex = cell.path("columnIndex").asInt();
-                String text = cell.path("content").asText("");
-                rows.get(rowIndex).set(colIndex, text);
-            }
-
-            Table table = new Table();
-            table.setRows(rows);
-            tables.add(table);
         }
-    }
 
-    // Filter content to remove key-value content
-    String unstructuredContent = fullContent;
-    for (String s : extractedValues) {
-        unstructuredContent = unstructuredContent.replace(s, "").trim();
-    }
+        //  Unstructured content = full content - matched values
+        String unstructuredContent = content;
+        for (String val : extractedValues) {
+            unstructuredContent = unstructuredContent.replace(val, "");
+        }
+        unstructuredContent = unstructuredContent.trim();
 
-    SimpleAnalysisResult result = new SimpleAnalysisResult();
-    result.setContent(content);
-    result.setKeyValuePairs(keyValues);
-    result.setTables(tables);
-    result.setUnstructuredContent(unstructuredContent); // <-- NEW FIELD
-    return result;
-  }
+        //  Final DTO
+        SimpleAnalysisResult result = new SimpleAnalysisResult();
+        result.setContent(content);
+        result.setKeyValuePairs(keyValues);
+        result.setTables(tables);
+        result.setUnstructuredContent(unstructuredContent);
+
+        return result;
 }
