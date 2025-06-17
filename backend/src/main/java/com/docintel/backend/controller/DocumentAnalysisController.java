@@ -1,6 +1,8 @@
 package com.docintel.backend.controller;
 
+import com.docintel.backend.dto.Chunk;
 import com.docintel.backend.dto.SimpleAnalysisResult;
+import com.docintel.backend.service.AdaptiveChunkingService;
 import com.docintel.backend.service.DocumentAnalysisService;
 import com.docintel.backend.util.DocumentParserUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +14,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collections;
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/documents")
 @Tag(name = "Document Analysis API", description = "Endpoints to analyze documents using Azure Form Recognizer")
@@ -20,11 +25,14 @@ public class DocumentAnalysisController {
     @Autowired
     private DocumentAnalysisService documentAnalysisService;
 
+    @Autowired
+    private AdaptiveChunkingService adaptiveChunkingService;
+
     @Operation(summary = "Upload a document and choose model (invoice or document)")
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadDocument(@Parameter(description = "File to upload", required = true)
                                                 @RequestPart("file") MultipartFile file,
-                                            @Parameter(description = "Model type: 'invoice' or 'document'", example = "invoice", required = true)
+                                             @Parameter(description = "Model type: 'invoice' or 'document'", example = "invoice", required = true)
                                                 @RequestParam("modelType") String modelType) {
         try {
             String operationLocation = documentAnalysisService.submitDocument(file.getBytes(), modelType);
@@ -42,6 +50,21 @@ public class DocumentAnalysisController {
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error getting analysis result: " + e.getMessage());
+        }
+    }
+    @Operation(summary = "Fetch content from operation-location and return adaptive chunks")
+    @GetMapping("/chunk")
+    public ResponseEntity<List<Chunk>> chunkByOperationLocation(@RequestParam String operationLocation) {
+        try {
+            // Step 1: Get extracted document result
+            SimpleAnalysisResult result = documentAnalysisService.pollForResult(operationLocation);
+
+            // Step 2: Extract content and chunk it
+            List<Chunk> chunks = adaptiveChunkingService.chunkDocument(result.getContent());
+
+            return ResponseEntity.ok(chunks);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Collections.emptyList());
         }
     }
 }
