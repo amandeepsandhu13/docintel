@@ -6,24 +6,27 @@ import com.docintel.backend.dto.Table;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-public class DocumentParserUtil {public static SimpleAnalysisResult parse(String json) throws Exception {
+public class DocumentParserUtil {
+    public static SimpleAnalysisResult parse(String json) throws Exception {
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode root = objectMapper.readTree(json);
     JsonNode analyzeResult = root.path("analyzeResult");
 
     String content = analyzeResult.path("content").asText();
+    String fullContent = analyzeResult.path("content").asText("");
 
     // Parse key-value pairs
     List<KeyValue> keyValues = new ArrayList<>();
     JsonNode kvPairsNode = analyzeResult.path("keyValuePairs");
     if (kvPairsNode.isArray()) {
         for (JsonNode kvNode : kvPairsNode) {
-            String key = kvNode.path("key").path("content").asText(null);
-            String value = kvNode.path("value").path("content").asText(null);
+            String key = FormRecognizerUtils.extractContent(kvNode.path("key"));
+            String value = FormRecognizerUtils.extractContent(kvNode.path("value"));
+
+           // String key = kvNode.path("key").path("content").asText(null);
+            //String value = kvNode.path("value").path("content").asText(null);
             if (key != null && value != null) {
                 KeyValue kv = new KeyValue();
                 kv.setKey(key);
@@ -35,6 +38,7 @@ public class DocumentParserUtil {public static SimpleAnalysisResult parse(String
 
     // Parse tables
     List<Table> tables = new ArrayList<>();
+    Set<String> extractedValues = new HashSet<>();
     JsonNode tablesNode = analyzeResult.path("tables");
     if (tablesNode.isArray()) {
         for (JsonNode tableNode : tablesNode) {
@@ -61,13 +65,17 @@ public class DocumentParserUtil {public static SimpleAnalysisResult parse(String
         }
     }
 
+    // Filter content to remove key-value content
+    String unstructuredContent = fullContent;
+    for (String s : extractedValues) {
+        unstructuredContent = unstructuredContent.replace(s, "").trim();
+    }
+
     SimpleAnalysisResult result = new SimpleAnalysisResult();
     result.setContent(content);
     result.setKeyValuePairs(keyValues);
     result.setTables(tables);
-
+    result.setUnstructuredContent(unstructuredContent); // <-- NEW FIELD
     return result;
   }
-
-
 }

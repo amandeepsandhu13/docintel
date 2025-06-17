@@ -23,6 +23,15 @@ public class SimpleAnalysisResult {
     @Schema(description = "Chunks of the document content for better context splitting")
     private List<Chunk> chunks;
 
+    private String unstructuredContent;
+    public String getUnstructuredContent() {
+        return unstructuredContent;
+    }
+
+    public void setUnstructuredContent(String unstructuredContent) {
+        this.unstructuredContent = unstructuredContent;
+    }
+
 
     // Getter and Setter for content
     public String getContent() {
