@@ -1,0 +1,86 @@
+<div class="container">
+  <h1 class="title">Welcome to DocIntel</h1>
+
+  <section class="upload-section">
+    <h2>Upload Document</h2>
+
+    <div class="form-group">
+      <label for="modelType">Select Model Type:</label>
+      <select id="modelType" [(ngModel)]="modelType" class="form-control">
+        <option value="invoice">Invoice</option>
+        <option value="document">Document</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="fileInput">Choose file:</label>
+      <input id="fileInput" type="file" (change)="onFileSelected($event)" class="form-control" />
+    </div>
+
+    <button (click)="upload()" [disabled]="!selectedFile" class="btn btn-primary">
+      Upload
+    </button>
+
+    <div *ngIf="loading">Processing your document, please wait...</div>
+
+
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+
+    <div *ngIf="uploadResponse" class="upload-response">
+      <h3>Upload Response</h3>
+      <pre>{{ uploadResponse | json }}</pre>
+    </div>
+  </section>
+
+
+  <section *ngIf="analysisResult" class="result-section">
+    <h2>Analysis Result</h2>
+
+    <div class="content-preview">
+      <h3>Content</h3>
+      <pre>{{ analysisResult.content }}</pre>
+    </div>
+
+    <div *ngIf="analysisResult.tables?.length" class="tables">
+      <h3>Tables</h3>
+      <div *ngFor="let table of analysisResult.tables; let i = index" class="table-wrapper">
+        <h4>Table {{ i + 1 }}</h4>
+        <table class="styled-table">
+          <thead>
+          <tr>
+            <th *ngFor="let headerCell of table.rows[0]">{{ headerCell }}</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let row of table.rows.slice(1)">
+            <td *ngFor="let cell of row">{{ cell }}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <h3>Key-Value Pairs</h3>
+    <table *ngIf="analysisResult.keyValuePairs?.length > 0">
+      <thead>
+      <tr>
+        <th>Key</th>
+        <th>Value</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let kv of analysisResult.keyValuePairs">
+        <td>{{ kv.key }}</td>
+        <td>{{ kv.value }}</td>
+      </tr>
+      </tbody>
+    </table>
+    <p *ngIf="!analysisResult.keyValuePairs || analysisResult.keyValuePairs.length === 0">No key-value pairs found.</p>
+
+    <h3 style="margin-top: 20px;">Unstructured Content (Not Matched to Key-Value Format)</h3>
+    <pre>{{ analysisResult.unstructuredContent }}</pre>
+
+  </section>
+</div>
