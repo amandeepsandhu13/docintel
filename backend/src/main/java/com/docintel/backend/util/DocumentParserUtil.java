@@ -41,7 +41,7 @@ public class DocumentParserUtil {
             }
         }
 
-        // 📊 Parse tables
+        //  Parse tables
         List<Table> tables = new ArrayList<>();
         JsonNode tablesNode = analyzeResult.path("tables");
 
@@ -85,4 +85,5 @@ public class DocumentParserUtil {
         result.setUnstructuredContent(unstructuredContent);
 
         return result;
+    }
 }
