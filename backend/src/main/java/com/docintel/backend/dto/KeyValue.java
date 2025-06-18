@@ -3,9 +3,17 @@ package com.docintel.backend.dto;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
-@NoArgsConstructor
-@AllArgsConstructor
+
+
 public class KeyValue {
+
+    public KeyValue() {
+    }
+
+    public KeyValue(String key, String value) {
+        this.key = key;
+        this.value = value;
+    }
 
     private String key;
     private String value;
