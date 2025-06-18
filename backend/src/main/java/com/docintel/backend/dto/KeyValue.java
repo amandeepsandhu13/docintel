@@ -1,5 +1,10 @@
 package com.docintel.backend.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor
+@AllArgsConstructor
 public class KeyValue {
 
     private String key;
