@@ -31,6 +31,11 @@ public class DocumentAnalysisService {
 
     // Upload file to Azure Form Recognizer prebuilt-document analyze endpoint
     public String submitDocument(byte[] fileBytes, String modelType) {
+
+        if (!modelType.equalsIgnoreCase("invoice") && !modelType.equalsIgnoreCase("document")) {
+            throw new IllegalArgumentException("Model type must be 'invoice' or 'document'");
+        }
+
         String model = modelType.equalsIgnoreCase("invoice") ? "prebuilt-invoice" : "prebuilt-document";
 
         String url = endpoint + "/formrecognizer/documentModels/" + model + ":analyze?api-version=2023-07-31";
