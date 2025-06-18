@@ -11,7 +11,7 @@ import java.util.List;
 @Schema(description = "DTO representing a document analysis result")
 @Data
 public class SimpleAnalysisResult {
-    @Schema(description = "Full extracted text from document")
+    @Schema(description = "Full extracted text from document", example = "Invoice #12345 from ABC Corp")
     private String content;
 
     @Schema(description = "Extracted key-value pairs from the document")
@@ -20,7 +20,7 @@ public class SimpleAnalysisResult {
     @Schema(description = "Extracted tables from the document")
     private List<Table> tables;
 
-    @Schema(description = "Chunks of the document content for better context splitting")
+    @Schema(description = "Chunks of the document content", example = "[{\"index\": 0, \"text\": \"Section 1: Overview\"}]")
     private List<Chunk> chunks;
 
     private String unstructuredContent;
