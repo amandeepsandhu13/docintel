@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/documents")
@@ -35,10 +36,14 @@ public class DocumentAnalysisController {
                                              @Parameter(description = "Model type: 'invoice' or 'document'", example = "invoice", required = true)
                                                 @RequestParam("modelType") String modelType) {
         try {
+            if (file.getSize() > 10 * 1024 * 1024) {
+                return ResponseEntity.badRequest().body("File too large. Max 10MB allowed.");
+            }
+
             String operationLocation = documentAnalysisService.submitDocument(file.getBytes(), modelType);
             return ResponseEntity.ok(operationLocation);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Failed to upload document: " + e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("error","Failed to upload document" ,"details", e.getMessage()));
         }
     }
 
