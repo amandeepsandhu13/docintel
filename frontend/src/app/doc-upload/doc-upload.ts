@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; //  Required for ngModel
+import { FormsModule } from '@angular/forms';
+import { QnaComponent } from '../components/qna/qna.component';
+
 
 import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
 
@@ -9,7 +11,7 @@ import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http'
   selector: 'app-doc-upload',
   templateUrl: './doc-upload.html',
   styleUrls: ['./doc-upload.scss'], // if you use styles
-  imports: [CommonModule, FormsModule] //  Fixes both *ngIf and json pipe
+  imports: [CommonModule, FormsModule, QnaComponent]
 })
 export class DocUploadComponent {
   modelType: string = 'invoice';
@@ -45,7 +47,7 @@ export class DocUploadComponent {
 
 
     // Update URL to your backend upload endpoint
-    this.http.post('http://localhost:8081/api/documents/upload', formData, { responseType: 'text' }).subscribe({
+      this.http.post('http://localhost:8081/api/documents/upload', formData, { responseType: 'json' }).subscribe({
      next: (operationLocation: string) => {
        this.uploadResponse = operationLocation;
        this.getResult(operationLocation); //  Get analysis result

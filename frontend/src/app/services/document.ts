@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Chunk } from '../models/chunk';
+import { QnaComponent } from '../components/qna/qna.component';
+
 
 
 @Injectable({
@@ -10,6 +12,8 @@ import { Chunk } from '../models/chunk';
 export class DocumentService {
 
   private backendUrl = 'http://localhost:8081/api/documents'; // Spring Boot backend
+    private aiUrl = 'http://localhost:8081/api/ai';
+
 
   constructor(private http: HttpClient) { }
 
@@ -22,6 +26,16 @@ export class DocumentService {
     return this.http.post(`${this.backendUrl}/upload`, formData, {
       params: new HttpParams().set('modelType', modelType),
       responseType: 'text'
+    });
+  }
+
+ getChunks(docId: string): Observable<any> {
+    return this.http.get(`${this.backendUrl}/${docId}/chunks`);
+  }
+  askQuestion(chunk: string, question: string): Observable<any> {
+    return this.http.post(`${this.aiUrl}/ask`, {
+      chunk,
+      question
     });
   }
 
