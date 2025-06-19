@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Chunk } from '../models/chunk';
 import { QnaComponent } from '../components/qna/qna.component';
 
-
+interface Chunk {
+  index: number;
+  text: string;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -17,7 +19,7 @@ export class DocumentService {
 
   constructor(private http: HttpClient) { }
 
-  uploadDocument(file: File, modelType: string) {
+  uploadDocument(file: File, modelType: string): Observable<String> {
      const formData = new FormData();
         formData.append('file', file);              // must match @RequestPart("file")
         formData.append('modelType', modelType);    // must match @RequestParam("modelType")
@@ -29,14 +31,14 @@ export class DocumentService {
     });
   }
 
- getChunks(docId: string): Observable<any> {
-    return this.http.get(`${this.backendUrl}/${docId}/chunks`);
+ getChunks(docId: string): Observable<{ chunks: Chunk[] }> {
+   return this.http.get<{ chunks: Chunk[] }>(`${this.backendUrl}/chunks`, {
+     params: new HttpParams().set('docId', docId)
+                                                                });
   }
-  askQuestion(chunk: string, question: string): Observable<any> {
-    return this.http.post(`${this.aiUrl}/ask`, {
-      chunk,
-      question
-    });
+  askQuestion(chunkContent: string, question: string): Observable<any> {
+       return this.http.post(`${this.backendUrl}/ask-question`, { chunkContent, question }, { responseType: 'text' });
+
   }
 
   getAnalysisResult(operationLocation: string) {

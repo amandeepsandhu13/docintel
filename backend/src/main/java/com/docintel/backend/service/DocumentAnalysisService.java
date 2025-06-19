@@ -32,6 +32,7 @@ public class DocumentAnalysisService {
     private AdaptiveChunkingService adaptiveChunkingService;
 
     public DocumentAnalysisService(RestTemplate restTemplate) {
+
         this.restTemplate = restTemplate;
     }
 
@@ -64,6 +65,8 @@ public class DocumentAnalysisService {
 
     // Poll operation-location URL until result is ready, return parsed result
     public SimpleAnalysisResult pollForResult(String operationLocation) {
+        System.out.println("Polling operation location URL: " + operationLocation);
+
         HttpHeaders headers = new HttpHeaders();
         headers.set("Ocp-Apim-Subscription-Key", apikey);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));

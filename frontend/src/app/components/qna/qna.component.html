@@ -1,5 +1,5 @@
-<div *ngFor="let chunk of chunks" (click)="selectChunk(chunk.content)">
-  <strong>Chunk:</strong> {{ chunk.content | slice:0:100 }}...
+<div *ngFor="let chunk of chunks" (click)="selectChunk(chunk.text)">
+  <strong>Chunk:</strong> {{ chunk.text | slice:0:100 }}...
 </div>
 
 <div *ngIf="selectedChunk">
