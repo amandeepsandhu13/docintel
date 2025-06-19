@@ -19,23 +19,18 @@ export class DocumentService {
 
   constructor(private http: HttpClient) { }
 
-  uploadDocument(file: File, modelType: string): Observable<String> {
-     const formData = new FormData();
-        formData.append('file', file);              // must match @RequestPart("file")
-        formData.append('modelType', modelType);    // must match @RequestParam("modelType")
+ uploadDocument(file: File, modelType: string): Observable<{docId: string}> {
+   const formData = new FormData();
+   formData.append('file', file);
+   formData.append('modelType', modelType);
 
-
-    return this.http.post(`${this.backendUrl}/upload`, formData, {
-      params: new HttpParams().set('modelType', modelType),
-      responseType: 'text'
-    });
-  }
+   return this.http.post<{docId: string}>(`${this.backendUrl}/upload`, formData);
+ }
 
  getChunks(docId: string): Observable<{ chunks: Chunk[] }> {
-   return this.http.get<{ chunks: Chunk[] }>(`${this.backendUrl}/chunks`, {
-     params: new HttpParams().set('docId', docId)
-                                                                });
-  }
+   return this.http.get<{ chunks: Chunk[] }>(`${this.backendUrl}/${docId}/chunks`);
+ }
+
   askQuestion(chunkContent: string, question: string): Observable<any> {
        return this.http.post(`${this.backendUrl}/ask-question`, { chunkContent, question }, { responseType: 'text' });
 

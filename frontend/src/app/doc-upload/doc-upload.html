@@ -90,8 +90,9 @@
   </section>
 
   <!-- Q&A component with docId binding -->
-  <section *ngIf="uploadResponse">
+  <section>
     <h2>💬 DocIntel Q&A</h2>
-    <app-qna [docId]="uploadResponse"></app-qna>
+    <app-qna *ngIf="docId" [docId]="docId"></app-qna>
+
   </section>
 </div>

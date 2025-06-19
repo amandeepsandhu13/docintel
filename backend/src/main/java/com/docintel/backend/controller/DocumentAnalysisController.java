@@ -105,6 +105,10 @@ public class DocumentAnalysisController {
 
         return ResponseEntity.ok(Map.of(
                 "docId", docId,
+                "content", result.getContent(),
+                "keyValuePairs", result.getKeyValuePairs(),
+                "tables", result.getTables(),
+                "unstructuredContent", result.getUnstructuredContent(),
                 "chunks", result.getChunks()
         ));
     }

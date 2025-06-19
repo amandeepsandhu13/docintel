@@ -18,7 +18,7 @@ interface Chunk {
   imports: [CommonModule, FormsModule]
 })
 export class QnaComponent implements OnInit{
- @Input() docId: string = '';
+@Input() docId: string | null = null;
   chunks: Chunk[] = [];
   selectedChunk = '';
   question = '';
