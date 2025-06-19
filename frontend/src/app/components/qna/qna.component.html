@@ -1,0 +1,10 @@
+<div *ngFor="let chunk of chunks" (click)="selectChunk(chunk.content)">
+  <strong>Chunk:</strong> {{ chunk.content | slice:0:100 }}...
+</div>
+
+<div *ngIf="selectedChunk">
+  <textarea [(ngModel)]="question"></textarea>
+  <button (click)="submit()">Ask</button>
+  <p *ngIf="loading">Thinking...</p>
+  <p *ngIf="answer">{{ answer }}</p>
+</div>
