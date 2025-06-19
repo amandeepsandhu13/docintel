@@ -2,7 +2,7 @@ import { Component, OnInit, Input } from '@angular/core';
 import { OpenAIService } from '../../services/openai.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+//import { ActivatedRoute } from '@angular/router';
 import { DocumentService } from '../../services/document';
 
 interface Chunk {
@@ -27,18 +27,21 @@ export class QnaComponent implements OnInit{
 
   constructor(
     private documentService: DocumentService,
-    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
-  const routeDocId = this.route.snapshot.paramMap.get('docId');
-    if (!this.docId && routeDocId) {
-      this.docId = routeDocId;
-    }
+//   const routeDocId = this.route.snapshot.paramMap.get('docId');
+//
+//     if (!this.docId && routeDocId) {
+//       this.docId = routeDocId;
+//     }
       if (this.docId) {
+
         this.documentService.getChunks(this.docId).subscribe({
           next: (res: any) => {
             this.chunks = res.chunks || [];
+           console.log('Chunks loaded:', this.chunks);
+
           },
           error: (err) => {
             console.error('Error loading chunks:', err);

@@ -1,10 +1,26 @@
-<div *ngFor="let chunk of chunks" (click)="selectChunk(chunk.text)">
-  <strong>Chunk:</strong> {{ chunk.text | slice:0:100 }}...
+
+
+<!-- Chunk Selection Dropdown -->
+<div *ngIf="chunks.length > 0" class="form-group styled-dropdown">
+  <label for="chunkSelect">📌 Select a Chunk</label>
+  <select id="chunkSelect" [(ngModel)]="selectedChunk" class="form-control">
+    <option *ngFor="let chunk of chunks" [ngValue]="chunk.text">
+      {{ chunk.text | slice:0:100 }}...
+    </option>
+  </select>
 </div>
 
-<div *ngIf="selectedChunk">
-  <textarea [(ngModel)]="question"></textarea>
-  <button (click)="submit()">Ask</button>
-  <p *ngIf="loading">Thinking...</p>
-  <p *ngIf="answer">{{ answer }}</p>
+<!-- Question Box -->
+<div *ngIf="selectedChunk" class="question-box">
+  <label for="question">💬 Ask a Question</label>
+  <textarea
+    id="question" [(ngModel)]="question"
+    class="form-control" rows="3"
+    placeholder="Type your question about the selected chunk here..."
+  ></textarea>
+  <button (click)="submit()" class="btn btn-primary" [disabled]="!question.trim()">Ask</button>
 </div>
+
+<!-- Answer -->
+<div *ngIf="loading" class="mt-2">⏳ Thinking...</div>
+<div *ngIf="answer" class="answer-box mt-2">🧠 <strong>Answer:</strong> {{ answer }}</div>

@@ -16,3 +16,48 @@ button {
   width: fit-content;
   padding: 0.5rem 1rem;
 }
+.styled-dropdown {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.styled-dropdown label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  display: block;
+  color: #2c3e50;
+}
+
+.styled-dropdown select.form-control {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  background-color: #f8f9fa;
+  transition: border 0.3s ease;
+}
+
+.styled-dropdown select.form-control:focus {
+  border-color: #007bff;
+  outline: none;
+}
+.styled-textarea {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  resize: vertical;
+  background-color: #fcfcfc;
+  transition: border-color 0.3s ease;
+}
+
+.styled-textarea:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.mt-2 {
+  margin-top: 10px;
+}
