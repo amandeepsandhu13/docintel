@@ -31,10 +31,11 @@ export class DocumentService {
    return this.http.get<{ chunks: Chunk[] }>(`${this.backendUrl}/${docId}/chunks`);
  }
 
-  askQuestion(chunkContent: string, question: string): Observable<any> {
-       return this.http.post(`${this.backendUrl}/ask-question`, { chunkContent, question }, { responseType: 'text' });
+askQuestion(chunkContent: string, question: string): Observable<any> {
+  return this.http.post(`${this.aiUrl}/ask`, { chunkContent, question }, { responseType: 'text' });
+}
 
-  }
+
 
   getAnalysisResult(operationLocation: string) {
     return this.http.get(`${this.backendUrl}/analyze-doc`, {
