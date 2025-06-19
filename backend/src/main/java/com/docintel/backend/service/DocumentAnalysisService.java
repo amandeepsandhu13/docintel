@@ -1,5 +1,6 @@
 package com.docintel.backend.service;
 
+import com.docintel.backend.dto.Chunk;
 import com.docintel.backend.dto.SimpleAnalysisResult;
 import com.docintel.backend.util.DocumentParserUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,11 +11,16 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class DocumentAnalysisService {
 
     private final RestTemplate restTemplate;
+    private final Map<String, SimpleAnalysisResult> parsedDocs = new ConcurrentHashMap<>();
+
 
     @Value("${azure.formrecognizer.endpoint}")
     private String endpoint;
@@ -57,7 +63,7 @@ public class DocumentAnalysisService {
     }
 
     // Poll operation-location URL until result is ready, return parsed result
-    public SimpleAnalysisResult pollForResult(String operationLocation) throws InterruptedException {
+    public SimpleAnalysisResult pollForResult(String operationLocation) {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Ocp-Apim-Subscription-Key", apikey);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
@@ -74,10 +80,8 @@ public class DocumentAnalysisService {
 
                 if (body.contains("\"status\":\"succeeded\"")) {
                     try {
-                        //  Parse JSON into DTO
                         SimpleAnalysisResult result = DocumentParserUtil.parse(body);
 
-                        //  Add adaptive chunks from content
                         if (result.getContent() != null && !result.getContent().isEmpty()) {
                             result.setChunks(adaptiveChunkingService.chunkDocument(result.getContent()));
                         }
@@ -88,20 +92,54 @@ public class DocumentAnalysisService {
                     }
 
                 } else if (body.contains("\"status\":\"failed\"")) {
-                    throw new RuntimeException("Document analysis failed: " + body);
-                } else {
-                    Thread.sleep(5000);  // Retry delay
-                    retryCount++;
+                    throw new RuntimeException("Azure Form Recognizer failed: " + body);
                 }
-
             } else if (response.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
-                Thread.sleep(10000);
-                retryCount++;
+                // Azure is throttling
+                sleepSilently(10000);
             } else {
-                throw new RuntimeException("Unexpected response: " + response.getStatusCode());
+                throw new RuntimeException("Unexpected response while polling: " + response.getStatusCode());
             }
+
+            sleepSilently(5000);
+            retryCount++;
         }
 
-        throw new RuntimeException("Max retries exceeded while polling for analysis result.");
+        throw new RuntimeException("Max retries exceeded while polling Form Recognizer.");
+    }
+
+    // Helper method to handle InterruptedException internally
+    private void sleepSilently(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Polling thread interrupted", e);
+        }
+    }
+
+
+    public SimpleAnalysisResult analyzeAndGetResult(byte[] fileBytes, String modelType) {
+        // Call Azure Form Recognizer
+        String operationLocation = submitDocument(fileBytes, modelType);
+        return pollForResult(operationLocation); // returns full JSON as String
+    }
+
+    public void cacheParsedResult(String docId, SimpleAnalysisResult parsed) {
+        parsedDocs.put(docId, parsed); // In-memory for now
+    }
+    public String getAnalyzedContent(String docId) {
+        SimpleAnalysisResult result = parsedDocs.get(docId);
+        return result != null ? result.getContent() : null;
+    }
+
+    public List<Chunk> getChunks(String docId) {
+        SimpleAnalysisResult result = parsedDocs.get(docId);
+        return result != null ? result.getChunks() : Collections.emptyList();
+    }
+
+    public SimpleAnalysisResult getParsedResult(String docId) {
+        return parsedDocs.get(docId);
+
     }
 }
