@@ -1,6 +1,7 @@
 package com.docintel.backend.controller;
 
 import com.docintel.backend.dto.Chunk;
+import com.docintel.backend.dto.ChunkResponse;
 import com.docintel.backend.dto.SimpleAnalysisResult;
 import com.docintel.backend.service.AdaptiveChunkingService;
 import com.docintel.backend.service.DocumentAnalysisService;
@@ -9,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/documents")
@@ -39,9 +42,18 @@ public class DocumentAnalysisController {
             if (file.getSize() > 10 * 1024 * 1024) {
                 return ResponseEntity.badRequest().body("File too large. Max 10MB allowed.");
             }
+            // 1. Analyze + get raw JSON result
+            SimpleAnalysisResult parsed = documentAnalysisService.analyzeAndGetResult(file.getBytes(), modelType);
 
-            String operationLocation = documentAnalysisService.submitDocument(file.getBytes(), modelType);
-            return ResponseEntity.ok(operationLocation);
+            // 2. Cache with a unique doc ID
+            String docId = UUID.randomUUID().toString();
+            documentAnalysisService.cacheParsedResult(docId, parsed);
+
+            // 3. Return docId to frontend
+            return ResponseEntity.ok(Map.of("docId", docId));
+
+           // String operationLocation = documentAnalysisService.submitDocument(file.getBytes(), modelType);
+           // return ResponseEntity.ok(operationLocation);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("error","Failed to upload document" ,"details", e.getMessage()));
         }
@@ -71,5 +83,20 @@ public class DocumentAnalysisController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Collections.emptyList());
         }
+    }
+
+    @GetMapping("/{docId}/chunks")
+    public ResponseEntity<?> getChunks(@PathVariable String docId) {
+        SimpleAnalysisResult result = documentAnalysisService.getParsedResult(docId);
+
+        if (result == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Document not found for ID: " + docId));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "docId", docId,
+                "chunks", result.getChunks()
+        ));
     }
 }
