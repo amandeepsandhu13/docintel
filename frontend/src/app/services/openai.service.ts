@@ -1,21 +1,17 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs';
-
+import { HttpClient } from '@angular/common/http';
+import { Observable, map } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class OpenAIService {
-  private baseUrl = 'http://localhost:8081/api/ai';
+
+  private aiUrl = 'http://localhost:8081/api/ai';
 
   constructor(private http: HttpClient) {}
 
-askQuestion(chunk: string, question: string): Observable<string> {
-  return this.http
-    .post<{ answer: string }>(`${this.baseUrl}/ask`, { chunk, question })
-    .pipe(
-      map((response: { answer: string }) => response.answer)
-    );
-}
-
+  askQuestion(context: string, question: string): Observable<string> {
+    const request = { context, question };
+    return this.http.post<{ answer: string }>(`${this.aiUrl}/ask`, request)
+      .pipe(map(res => res.answer));
+  }
 }

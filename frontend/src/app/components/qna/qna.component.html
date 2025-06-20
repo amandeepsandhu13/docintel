@@ -4,11 +4,22 @@
 <div *ngIf="chunks.length > 0" class="form-group styled-dropdown">
   <label for="chunkSelect">📌 Select a Chunk</label>
   <select id="chunkSelect" [(ngModel)]="selectedChunk" class="form-control">
-    <option *ngFor="let chunk of chunks" [ngValue]="chunk.text">
-      {{ chunk.text | slice:0:100 }}...
+    <option *ngFor="let chunk of chunks" [value]="chunk.index">
+<!--      {{ chunk.text | slice:0:100 }}...-->
+<!--      Chunk {{ chunk.index + 1 }}: {{ chunk.text | slice:0:80 }}...-->
+      Chunk {{ chunk.index + 1 }}: {{ chunk.text ? (chunk.text | slice: 0: 80) : 'Empty chunk' }}...
+
+
     </option>
   </select>
+
 </div>
+
+<div *ngIf="selectedChunk !== null">
+  <h6>Selected Chunk Content</h6>
+  <pre>{{ selectedChunkText }}</pre>
+</div>
+
 
 <!-- Question Box -->
 <div *ngIf="selectedChunk" class="question-box">
