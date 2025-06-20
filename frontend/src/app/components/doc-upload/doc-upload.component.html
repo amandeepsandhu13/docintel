@@ -1,0 +1,49 @@
+<div class="upload-container">
+  <h2>Upload Document</h2>
+
+  <input type="file" (change)="onFileSelected($event)" />
+  <select [(ngModel)]="modelType">
+    <option value="invoice">Invoice Model</option>
+    <option value="document">Document Model</option>
+  </select>
+
+  <button (click)="upload()" [disabled]="loading">Upload</button>
+
+  <div *ngIf="analysisResult">
+    <h3>📄 Content:</h3>
+    <p>{{ analysisResult.content }}</p>
+
+    <div *ngIf="analysisResult.tables?.length">
+      <h3>🧮 Tables:</h3>
+      <table border="1">
+        <tr *ngFor="let row of analysisResult.tables[0].rows">
+          <td *ngFor="let cell of row">{{ cell }}</td>
+        </tr>
+      </table>
+    </div>
+
+    <h3>🔑 Key-Value Pairs:</h3>
+    <ul>
+      <li *ngFor="let kv of analysisResult.keyValuePairs">{{ kv.key }} : {{ kv.value }}</li>
+    </ul>
+
+    <h3>🧩 Chunks:</h3>
+    <ul>
+      <li *ngFor="let chunk of analysisResult.chunks" (click)="selectChunk(chunk)"
+          [class.selected]="selectedChunk === chunk">
+        <b>Chunk {{ chunk.index }}:</b> {{ chunk.text }}
+      </li>
+    </ul>
+
+    <div *ngIf="selectedChunk">
+      <h4>Ask Question on Chunk {{ selectedChunk.index }}:</h4>
+      <input [(ngModel)]="question" placeholder="Type your question..." />
+      <button (click)="ask()">Ask</button>
+
+      <div *ngIf="answer">
+        <h5>Answer:</h5>
+        <p>{{ answer }}</p>
+      </div>
+    </div>
+  </div>
+</div>
