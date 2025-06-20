@@ -35,6 +35,7 @@ public class DocumentAnalysisController {
     @Autowired
     private AdaptiveChunkingService adaptiveChunkingService;
 
+
     private static final Logger logger = LoggerFactory.getLogger(DocumentAnalysisController.class);
 
     @Operation(summary = "Upload a document and choose model (invoice or document)")
@@ -112,4 +113,5 @@ public class DocumentAnalysisController {
                 "chunks", result.getChunks()
         ));
     }
+
 }
