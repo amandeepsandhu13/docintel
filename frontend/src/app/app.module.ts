@@ -4,7 +4,7 @@ import { QnaComponent } from './components/qna/qna.component';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { App } from './app';
-import { DocUploadComponent } from './doc-upload/doc-upload';
+import { DocUploadComponent } from './components/doc-upload/doc-upload.component';
 
 
 @NgModule({
