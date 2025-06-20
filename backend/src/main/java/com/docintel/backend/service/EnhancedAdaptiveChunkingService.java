@@ -10,8 +10,8 @@ import java.util.List;
 @Service
 public class EnhancedAdaptiveChunkingService {
 
-    private static final int MAX_CHUNK_SIZE = 1000;
-    private static final int MIN_CHUNK_SIZE = 50;
+    private static final int MAX_CHUNK_SIZE = 1000; // Max chars after merging
+    private static final double SIMILARITY_THRESHOLD = 0.85;
 
     private final OpenAIEmbeddingService embeddingService;
 
@@ -21,67 +21,67 @@ public class EnhancedAdaptiveChunkingService {
     }
 
     public List<Chunk> chunkDocument(String content) {
-        List<Chunk> initialChunks = hybridSplit(content);
-        System.out.println("Initial chunks before merge: " + initialChunks.size());
-        return mergeByLength(initialChunks);
+        List<Chunk> initialChunks = initialSplit(content);
+        System.out.println("Initial chunks generated: " + initialChunks.size());
+        return mergeSimilarChunks(initialChunks);
     }
 
-    // Bulletproof hybrid splitting logic
-    private List<Chunk> hybridSplit(String content) {
+    // Step 1: Improved initial split
+    private List<Chunk> initialSplit(String content) {
         List<Chunk> chunks = new ArrayList<>();
         int index = 0;
 
-        // Normalize all newlines and spaces
-        content = content.replaceAll("[\\r\\n]+", " ").replaceAll("\\s+", " ").trim();
+        // Split into sentences based on period, exclamation or question mark.
+        String[] sentences = content.split("(?<=[.?!])\\s+");
 
-        // 1️⃣ Try section numbers first (for legal contracts)
-        String[] parts = content.split("(?=\\d+\\.\\s)");
+        for (String sentence : sentences) {
+            String trimmed = sentence.trim();
 
-        // 2️⃣ If no section numbers found, check for ALL CAPS legal headers (OCR-friendly)
-        if (parts.length == 1) {
-            parts = content.split("(?=\\b[A-Z][A-Z\\s]{5,}\\b)");
-        }
-
-        // 3️⃣ If still nothing, fallback to sentence splitting
-        if (parts.length == 1) {
-            parts = content.split("(?<=[.?!])\\s+");
-        }
-
-        // Build initial chunks
-        for (String part : parts) {
-            String trimmed = part.trim();
+            // Accept any meaningful sentence with at least 10 characters
             if (trimmed.length() >= 10 && trimmed.matches(".*[a-zA-Z].*")) {
                 chunks.add(new Chunk(index++, trimmed));
             }
         }
+
         return chunks;
     }
 
-    // Smart merge purely by length — keep chunks reasonably sized
-    private List<Chunk> mergeByLength(List<Chunk> inputChunks) {
+    // Step 2: Merge highly similar short chunks based on semantic similarity
+    private List<Chunk> mergeSimilarChunks(List<Chunk> initialChunks) {
         List<Chunk> mergedChunks = new ArrayList<>();
-        int index = 0;
-        StringBuilder buffer = new StringBuilder();
+        Chunk current = null;
 
-        for (Chunk c : inputChunks) {
-            if (buffer.length() + c.getText().length() <= MAX_CHUNK_SIZE) {
-                buffer.append(c.getText()).append(" ");
+        for (Chunk c : initialChunks) {
+            if (current == null) {
+                current = c;
+                current.setEmbedding(getEmbedding(current.getText()));
             } else {
-                mergedChunks.add(new Chunk(index++, buffer.toString().trim()));
-                buffer = new StringBuilder(c.getText()).append(" ");
+                double[] currentEmbedding = current.getEmbedding();
+                double[] nextEmbedding = getEmbedding(c.getText());
+                double similarity = cosineSimilarity(currentEmbedding, nextEmbedding);
+                int combinedLength = current.getText().length() + c.getText().length();
+
+                if (similarity > SIMILARITY_THRESHOLD && combinedLength < MAX_CHUNK_SIZE) {
+                    current.setText(current.getText() + " " + c.getText());
+                    current.setEmbedding(getEmbedding(current.getText()));
+                } else {
+                    mergedChunks.add(current);
+                    current = c;
+                    current.setEmbedding(nextEmbedding);
+                }
             }
         }
 
-        if (buffer.length() >= MIN_CHUNK_SIZE) {
-            mergedChunks.add(new Chunk(index++, buffer.toString().trim()));
+        if (current != null) {
+            mergedChunks.add(current);
         }
 
-        // Generate embeddings after final merge
-        for (Chunk chunk : mergedChunks) {
-            chunk.setEmbedding(getEmbedding(chunk.getText()));
+        // Re-index after merging
+        for (int i = 0; i < mergedChunks.size(); i++) {
+            mergedChunks.get(i).setIndex(i);
         }
 
-        System.out.println("Final merged chunks count: " + mergedChunks.size());
+        System.out.println("Final merged chunks: " + mergedChunks.size());
         return mergedChunks;
     }
 
@@ -89,7 +89,17 @@ public class EnhancedAdaptiveChunkingService {
         try {
             return embeddingService.getEmbedding(text);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to get embedding", e);
+            throw new RuntimeException("Failed to get embedding for chunk", e);
         }
+    }
+
+    private double cosineSimilarity(double[] vec1, double[] vec2) {
+        double dot = 0.0, normA = 0.0, normB = 0.0;
+        for (int i = 0; i < vec1.length; i++) {
+            dot += vec1[i] * vec2[i];
+            normA += vec1[i] * vec1[i];
+            normB += vec2[i] * vec2[i];
+        }
+        return dot / (Math.sqrt(normA) * Math.sqrt(normB) + 1e-10);
     }
 }
