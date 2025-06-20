@@ -1,9 +1,11 @@
+import { inject } from '@angular/core';
 import { Component, OnInit, Input } from '@angular/core';
-import { OpenAIService } from '../../services/openai.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 //import { ActivatedRoute } from '@angular/router';
-import { DocumentService } from '../../services/document';
+import { DocumentService } from '../../services/document.service';
+import { SimpleAnalysisResult } from '../../models/simple-analysis-result.model';
+import { OpenAIService } from '../../services/openai.service';
 
 interface Chunk {
   index: number;
@@ -27,6 +29,8 @@ export class QnaComponent implements OnInit{
 
   constructor(
     private documentService: DocumentService,
+    private openAIService: OpenAIService = inject(OpenAIService),
+
   ) {}
 
   ngOnInit(): void {
@@ -37,9 +41,9 @@ export class QnaComponent implements OnInit{
 //     }
       if (this.docId) {
 
-        this.documentService.getChunks(this.docId).subscribe({
-          next: (res: any) => {
-            this.chunks = res.chunks || [];
+      this.documentService.getAnalysisResult(this.docId).subscribe({
+        next: (result: SimpleAnalysisResult) => {
+          this.chunks = result.chunks;
            console.log('Chunks loaded:', this.chunks);
 
           },
@@ -57,22 +61,38 @@ export class QnaComponent implements OnInit{
      this.question = '';
    }
 
-   submit(): void {
-     if (!this.selectedChunk || !this.question.trim()) return;
+submit(): void {
+  if (this.selectedChunk === null || !this.question.trim()) return;
 
-     this.loading = true;
-     this.answer = '';
+  const selectedIndex = Number(this.selectedChunk); // ✅ convert to number
+  const chunk = this.chunks.find(c => c.index === selectedIndex);
 
-     this.documentService.askQuestion(this.selectedChunk, this.question).subscribe({
-       next: (res: string) => {
-         this.answer = res;
-       },
-       error: (err: any) => {
-         this.answer = 'Error: ' + err.message;
-       },
-       complete: () => {
-         this.loading = false;
-       }
-     });
-   }
+  if (!chunk) {
+    this.answer = 'Error: Selected chunk not found.';
+    return;
+  }
+
+  this.loading = true;
+  this.answer = '';
+
+  this.openAIService.askQuestion(chunk.text, this.question).subscribe({
+    next: (res: string) => {
+      this.answer = res;
+    },
+    error: (err: any) => {
+      this.answer = 'Error: ' + err.message;
+    },
+    complete: () => {
+      this.loading = false;
+    }
+  });
+}
+
+get selectedChunkText(): string | null {
+  const selectedIndex = Number(this.selectedChunk); // ✅ convert to number
+  const chunk = this.chunks.find(c => c.index === selectedIndex);
+  return chunk ? chunk.text : null;
+}
+
+
  }

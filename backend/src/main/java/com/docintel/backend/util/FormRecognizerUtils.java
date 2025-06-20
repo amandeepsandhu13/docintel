@@ -29,4 +29,11 @@ public class FormRecognizerUtils {
 
         return null;
     }
+
+    // Utility method
+    public static boolean isAllowedExtension(String filename) {
+        String lower = filename.toLowerCase();
+        return lower.endsWith(".pdf") || lower.endsWith(".jpg")
+                || lower.endsWith(".jpeg") || lower.endsWith(".png");
+    }
 }
