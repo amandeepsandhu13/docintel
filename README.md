@@ -16,7 +16,6 @@ DocIntel is an AI-driven platform designed to extract, analyze, and interact wit
 - Frontend: Angular (standalone components, TypeScript, RxJS)
 - Backend: Spring Boot (Java)
 - AI Services: Azure Form Recognizer, OpenAI GPT
-- Data Storage: MySQL (or configurable)
 - Communication: REST APIs
 
 ## Setup Instructions
