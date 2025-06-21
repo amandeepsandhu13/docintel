@@ -10,8 +10,8 @@ import java.util.List;
 @Service
 public class EnhancedAdaptiveChunkingService {
 
-    private static final int MAX_CHUNK_SIZE = 1000; // Max chars after merging
-    private static final double SIMILARITY_THRESHOLD = 0.85;
+    private static final int MAX_CHUNK_SIZE = 1000;
+    private static final int MIN_CHUNK_SIZE = 50;
 
     private final OpenAIEmbeddingService embeddingService;
 
@@ -21,84 +21,68 @@ public class EnhancedAdaptiveChunkingService {
     }
 
     public List<Chunk> chunkDocument(String content) {
-        List<Chunk> initialChunks = initialSplit(content);
-        System.out.println("Initial chunks generated: " + initialChunks.size());
-        return mergeSimilarChunks(initialChunks);
+        List<Chunk> initialChunks = hybridSplit(content);
+        System.out.println("Initial chunks before merge: " + initialChunks.size());
+        return mergeBySection(initialChunks);
     }
 
-    // Step 1: Improved initial split with auto-labeling
-    private List<Chunk> initialSplit(String content) {
+    // Hybrid splitter - section aware
+    private List<Chunk> hybridSplit(String content) {
         List<Chunk> chunks = new ArrayList<>();
         int index = 0;
 
-        // Split into sentences and sections
-        String[] parts = content.split("(?=\\n?\\d+\\.\\s)|(?<=\\.)\\s+");
+        // Normalize all newlines to spaces
+        content = content.replaceAll("[\\n\\r]+", " ").replaceAll("\\s+", " ").trim();
+
+        // Split on section numbers (legal style)
+        String[] parts = content.split("(?=(\\d+\\.\\s))");
+
+        if (parts.length == 1) {
+            parts = content.split("(?<=[.?!])\\s+");
+        }
 
         for (String part : parts) {
             String trimmed = part.trim();
             if (trimmed.length() >= 10 && trimmed.matches(".*[a-zA-Z].*")) {
-                Chunk chunk = new Chunk(index++, trimmed);
-                chunk.setSectionTitle(extractHeading(trimmed));  // Auto label assigned here
-                chunks.add(chunk);
+                chunks.add(new Chunk(index++, trimmed));
             }
         }
-
         return chunks;
     }
 
-    // Extract possible heading/section title
-    private String extractHeading(String text) {
-        if (text.matches("^\\d+\\.\\s+[A-Za-z ]+.*")) {
-            // E.g. "1. Scope of Services ..."
-            String[] splitParts = text.split("\\.\\s+", 2);
-            if (splitParts.length > 1) {
-                String possibleTitle = splitParts[1].split("\\n")[0];
-                if (possibleTitle.length() > 50) {
-                    possibleTitle = possibleTitle.substring(0, 50) + "...";
-                }
-                return possibleTitle;
-            }
-        }
-        // fallback generic title
-        return "Section";
-    }
-
-    // Step 2: Merge highly similar short chunks based on semantic similarity
-    private List<Chunk> mergeSimilarChunks(List<Chunk> initialChunks) {
+    // Merge chunks but preserve major section boundaries
+    private List<Chunk> mergeBySection(List<Chunk> inputChunks) {
         List<Chunk> mergedChunks = new ArrayList<>();
-        Chunk current = null;
+        int index = 0;
+        StringBuilder buffer = new StringBuilder();
 
-        for (Chunk c : initialChunks) {
-            if (current == null) {
-                current = c;
-                current.setEmbedding(getEmbedding(current.getText()));
-            } else {
-                double[] currentEmbedding = current.getEmbedding();
-                double[] nextEmbedding = getEmbedding(c.getText());
-                double similarity = cosineSimilarity(currentEmbedding, nextEmbedding);
-                int combinedLength = current.getText().length() + c.getText().length();
-
-                if (similarity > SIMILARITY_THRESHOLD && combinedLength < MAX_CHUNK_SIZE) {
-                    current.setText(current.getText() + " " + c.getText());
-                    current.setEmbedding(getEmbedding(current.getText()));
-                } else {
-                    mergedChunks.add(current);
-                    current = c;
-                    current.setEmbedding(nextEmbedding);
+        for (Chunk c : inputChunks) {
+            // If current chunk starts with section header, flush buffer first
+            if (c.getText().matches("^\\d+\\.\\s.*")) {
+                if (buffer.length() >= MIN_CHUNK_SIZE) {
+                    mergedChunks.add(new Chunk(index++, buffer.toString().trim()));
+                    buffer = new StringBuilder();
                 }
+            }
+
+            if (buffer.length() + c.getText().length() <= MAX_CHUNK_SIZE) {
+                buffer.append(c.getText()).append(" ");
+            } else {
+                mergedChunks.add(new Chunk(index++, buffer.toString().trim()));
+                buffer = new StringBuilder(c.getText()).append(" ");
             }
         }
 
-        if (current != null) {
-            mergedChunks.add(current);
+        if (buffer.length() >= MIN_CHUNK_SIZE) {
+            mergedChunks.add(new Chunk(index++, buffer.toString().trim()));
         }
 
-        // Re-index after merging
-        for (int i = 0; i < mergedChunks.size(); i++) {
-            mergedChunks.get(i).setIndex(i);
+        // Generate embeddings after final merge
+        for (Chunk chunk : mergedChunks) {
+            chunk.setEmbedding(getEmbedding(chunk.getText()));
         }
 
-        System.out.println("Final merged chunks: " + mergedChunks.size());
+        System.out.println("Final merged chunks count: " + mergedChunks.size());
         return mergedChunks;
     }
 
@@ -106,17 +90,7 @@ public class EnhancedAdaptiveChunkingService {
         try {
             return embeddingService.getEmbedding(text);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to get embedding for chunk", e);
+            throw new RuntimeException("Failed to get embedding", e);
         }
-    }
-
-    private double cosineSimilarity(double[] vec1, double[] vec2) {
-        double dot = 0.0, normA = 0.0, normB = 0.0;
-        for (int i = 0; i < vec1.length; i++) {
-            dot += vec1[i] * vec2[i];
-            normA += vec1[i] * vec1[i];
-            normB += vec2[i] * vec2[i];
-        }
-        return dot / (Math.sqrt(normA) * Math.sqrt(normB) + 1e-10);
     }
 }
