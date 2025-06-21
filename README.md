@@ -49,7 +49,9 @@ ng serve
 
 ## Key Features
 Upload documents (PDF, scanned images)
+
 Azure Form Recognizer OCR & Extraction
+
 Key-Value Pairs, Tables, Unstructured Content Extraction
 Hybrid Adaptive Chunking Service
 Embedding Generation (Azure OpenAI)
