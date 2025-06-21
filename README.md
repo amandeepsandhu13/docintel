@@ -26,3 +26,33 @@ DocIntel is an AI-driven platform designed to extract, analyze, and interact wit
 3. Run Spring Boot application:
    ```bash
    ./mvnw spring-boot:run
+
+### Configure environment variables or application.properties with your Azure keys:
+azure.formrecognizer.endpoint=YOUR_FORM_RECOGNIZER_ENDPOINT
+azure.formrecognizer.apikey=YOUR_FORM_RECOGNIZER_KEY
+openai.api.key=YOUR_OPENAI_KEY
+openai.api.endpoint=YOUR_AZURE_OPENAI_ENDPOINT
+openai.deployment=gpt-35-turbo
+openai.embedding.deployment=Docintel-text-embedding-ada-002
+openai.api.version=2023-07-01-preview
+
+## Frontend Setup (Angular 17)
+
+### Navigate to frontend folder:
+cd frontend
+
+Install dependencies:
+npm install
+
+Run frontend:
+ng serve
+
+## Key Features
+Upload documents (PDF, scanned images)
+Azure Form Recognizer OCR & Extraction
+Key-Value Pairs, Tables, Unstructured Content Extraction
+Hybrid Adaptive Chunking Service
+Embedding Generation (Azure OpenAI)
+Per-Chunk Question-Answering (RAG)
+Lightweight Entity Extraction (emails, dates, names)
+Graceful fallback and error handling
