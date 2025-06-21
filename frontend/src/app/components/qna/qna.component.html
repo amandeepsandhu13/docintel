@@ -1,37 +1,31 @@
-
-
 <!-- Chunk Selection Dropdown -->
-<div *ngIf="chunks.length > 0" class="form-group styled-dropdown">
-  <label for="chunkSelect">📌 Select a Chunk</label>
-  <select id="chunkSelect" [(ngModel)]="selectedChunk" class="form-control">
+<div *ngIf="chunks.length > 0" class="chunk-dropdown-card">
+  <label for="chunkSelect" class="chunk-label">📌 Select a Chunk</label>
+  <select id="chunkSelect" [(ngModel)]="selectedChunk" class="chunk-select">
     <option *ngFor="let chunk of chunks" [value]="chunk.index">
-<!--      {{ chunk.text | slice:0:100 }}...-->
-<!--      Chunk {{ chunk.index + 1 }}: {{ chunk.text | slice:0:80 }}...-->
       Chunk {{ chunk.index + 1 }}: {{ chunk.text ? (chunk.text | slice: 0: 80) : 'Empty chunk' }}...
-
-
     </option>
   </select>
-
 </div>
 
-<div *ngIf="selectedChunk !== null">
-  <h6>Selected Chunk Content</h6>
-  <pre>{{ selectedChunkText }}</pre>
+<!-- Selected Chunk Preview -->
+<div *ngIf="selectedChunk !== null" class="chunk-preview-card">
+  <h4>📄 Selected Chunk Content</h4>
+  <div class="chunk-text-box">{{ selectedChunkText }}</div>
 </div>
-
 
 <!-- Question Box -->
-<div *ngIf="selectedChunk" class="question-box">
-  <label for="question">💬 Ask a Question</label>
-  <textarea
-    id="question" [(ngModel)]="question"
-    class="form-control" rows="3"
-    placeholder="Type your question about the selected chunk here..."
-  ></textarea>
-  <button (click)="submit()" class="btn btn-primary" [disabled]="!question.trim()">Ask</button>
+<div *ngIf="selectedChunk" class="qna-container">
+  <label for="question" class="question-label">💬 Ask a Question</label>
+  <textarea id="question" [(ngModel)]="question" rows="3"
+            class="question-textarea"
+            placeholder="Type your question about the selected chunk here..."></textarea>
+  <button (click)="submit()" class="ask-button" [disabled]="!question.trim()">Ask</button>
 </div>
 
 <!-- Answer -->
-<div *ngIf="loading" class="mt-2">⏳ Thinking...</div>
-<div *ngIf="answer" class="answer-box mt-2">🧠 <strong>Answer:</strong> {{ answer }}</div>
+<div *ngIf="loading" class="loading-spinner">⏳ Thinking...</div>
+
+<div *ngIf="answer" class="answer-box">
+  🧠 <b>Answer:</b> {{ answer }}
+</div>

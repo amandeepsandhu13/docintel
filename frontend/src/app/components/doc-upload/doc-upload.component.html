@@ -1,49 +1,81 @@
 <div class="upload-container">
-  <h2>Upload Document</h2>
 
-  <input type="file" (change)="onFileSelected($event)" />
-  <select [(ngModel)]="modelType">
-    <option value="invoice">Invoice Model</option>
-    <option value="document">Document Model</option>
-  </select>
+  <h2>📄 DocIntel - Upload Document</h2>
 
-  <button (click)="upload()" [disabled]="loading">Upload</button>
+  <div class="upload-panel">
+    <input type="file" (change)="onFileSelected($event)" class="file-input" />
+    <select [(ngModel)]="modelType" class="model-select">
+      <option value="invoice">Invoice Model</option>
+      <option value="document">Document Model</option>
+    </select>
+    <button (click)="upload()" [disabled]="loading" class="upload-button">
+      {{ loading ? "Uploading..." : "Upload" }}
+    </button>
+  </div>
 
-  <div *ngIf="analysisResult">
-    <h3>📄 Content:</h3>
-    <p>{{ analysisResult.content }}</p>
+  <div *ngIf="loading" class="loading-spinner">Processing...</div>
 
-    <div *ngIf="analysisResult.tables?.length">
-      <h3>🧮 Tables:</h3>
-      <table border="1">
-        <tr *ngFor="let row of analysisResult.tables[0].rows">
-          <td *ngFor="let cell of row">{{ cell }}</td>
-        </tr>
-      </table>
+  <div *ngIf="analysisResult" class="analysis-layout">
+
+    <!-- Chunks Navigation -->
+    <div class="chunks-panel">
+      <h3>🧩 Chunks:</h3>
+      <ul>
+        <li *ngFor="let chunk of analysisResult.chunks"
+            (click)="selectChunk(chunk)"
+            [class.selected]="selectedChunk === chunk">
+          <b>📑 {{ chunk.sectionTitle || 'Chunk ' + chunk.index }}</b>
+        </li>
+      </ul>
+
     </div>
 
-    <h3>🔑 Key-Value Pairs:</h3>
-    <ul>
-      <li *ngFor="let kv of analysisResult.keyValuePairs">{{ kv.key }} : {{ kv.value }}</li>
-    </ul>
+    <!-- Selected Chunk and QnA -->
+    <div class="chunk-viewer">
+      <h3>📄 Chunk {{selectedChunk?.index}}</h3>
+      <div class="chunk-text">{{ selectedChunk?.text }}</div>
 
-    <h3>🧩 Chunks:</h3>
-    <ul>
-      <li *ngFor="let chunk of analysisResult.chunks" (click)="selectChunk(chunk)"
-          [class.selected]="selectedChunk === chunk">
-        <b>Chunk {{ chunk.index }}:</b> {{ chunk.text }}
-      </li>
-    </ul>
+      <div class="qna-panel">
+        <input [(ngModel)]="question"
+               type="text"
+               class="question-input"
+               placeholder="Ask your question about this chunk..." />
 
-    <div *ngIf="selectedChunk">
-      <h4>Ask Question on Chunk {{ selectedChunk.index }}:</h4>
-      <input [(ngModel)]="question" placeholder="Type your question..." />
-      <button (click)="ask()">Ask</button>
+        <button (click)="ask()"
+                [disabled]="!question.trim()"
+                class="ask-button">
+          Ask
+        </button>
 
-      <div *ngIf="answer">
-        <h5>Answer:</h5>
-        <p>{{ answer }}</p>
+        <div *ngIf="answer" class="answer">
+          <b>Answer:</b> {{ answer }}
+        </div>
       </div>
     </div>
+  </div>
+
+  <!-- Structured Data Section -->
+  <div *ngIf="analysisResult" class="structured-section">
+
+    <div class="card">
+      <h3>🔑 Key-Value Pairs:</h3>
+      <ul>
+        <li *ngFor="let kv of analysisResult.keyValuePairs">
+          {{ kv.key }} : {{ kv.value }}
+        </li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>🧮 Tables:</h3>
+      <div *ngFor="let table of analysisResult.tables">
+        <table border="1">
+          <tr *ngFor="let row of table.rows">
+            <td *ngFor="let cell of row">{{ cell }}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
   </div>
 </div>

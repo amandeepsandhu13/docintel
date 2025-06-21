@@ -1,207 +1,149 @@
-/* Container for the whole app */
-.container {
-  max-width: 900px;
-  margin: 30px auto;
-  padding: 0 20px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #333;
+.upload-container {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 20px;
+  background: #fdfdfd;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  font-family: 'Segoe UI', sans-serif;
 }
 
-/* Upload section styling */
-.upload-section {
-  background: #f9f9f9;
-  border-radius: 8px;
-  padding: 20px 25px;
+h2 {
+  text-align: center;
+  color: #007bff;
   margin-bottom: 30px;
-  box-shadow: 0 2px 5px rgb(0 0 0 / 0.1);
-  text-align: left;
 }
 
-/* Form groups for labels + inputs */
-.form-group {
-  margin-bottom: 15px;
+.upload-panel {
   display: flex;
-  flex-direction: column;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
-/* Labels */
-label {
-  font-weight: 600;
-  margin-bottom: 5px;
-  color: #444;
-}
-
-/* Inputs */
-input[type="file"],
-select,
-input[type="text"] {
-  padding: 8px 10px;
+.file-input, .model-select {
+  padding: 10px;
+  font-size: 1rem;
+  border-radius: 8px;
   border: 1px solid #ccc;
-  border-radius: 5px;
-  font-size: 1rem;
-  transition: border-color 0.3s ease;
 }
 
-input[type="file"]:focus,
-select:focus,
-input[type="text"]:focus {
-  outline: none;
-  border-color: #007acc;
-}
-
-/* Button styles */
-button {
-  margin-top: 15px;
-  padding: 10px 20px;
-  font-size: 1rem;
-  font-weight: 600;
+.upload-button {
+  padding: 10px 24px;
+  font-weight: bold;
+  background-color: #28a745;
   color: white;
   border: none;
+  border-radius: 8px;
+  transition: 0.3s;
+}
+
+.upload-button:hover {
+  background-color: #1e7e34;
+}
+
+.loading-spinner {
+  text-align: center;
+  font-weight: bold;
+  color: #555;
+}
+
+.analysis-layout {
+  display: flex;
+  gap: 30px;
+  margin-top: 30px;
+}
+
+.chunks-panel {
+  flex: 1;
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.chunks-panel ul {
+  list-style: none;
+  padding: 0;
+}
+
+.chunks-panel li {
+  padding: 10px;
+  margin-bottom: 8px;
+  background: #eaeaea;
   border-radius: 6px;
   cursor: pointer;
-  background-color: #007acc;
-  transition: background-color 0.3s ease;
+  transition: 0.3s;
 }
 
-button:disabled {
-  background-color: #a0a0a0;
-  cursor: not-allowed;
+.chunks-panel li:hover {
+  background: #d1d1d1;
 }
 
-button:hover:not(:disabled) {
-  background-color: #005fa3;
+.chunks-panel li.selected {
+  background-color: #007bff;
+  color: white;
 }
 
-/* Error message */
-.error-message {
-  margin-top: 15px;
-  color: #d9534f;
-  font-weight: 700;
-}
-
-/* Upload response container */
-.upload-response {
-  margin-top: 20px;
-  background: #eef6fc;
-  border: 1px solid #b8d9f1;
-  padding: 15px;
-  border-radius: 6px;
-  font-family: monospace;
-  font-size: 0.95rem;
-  max-height: 250px;
-  overflow-y: auto;
-}
-
-/* Analysis Result section */
-.result-section {
-  margin-bottom: 30px;
-  background: #fafafa;
+.chunk-viewer {
+  flex: 3;
   padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgb(0 0 0 / 0.08);
-}
-
-/* Headings */
-h2, h3, h4 {
-  color: #222;
-  margin-bottom: 15px;
-  font-weight: 700;
-}
-
-/* Style the raw text block */
-pre {
-  background-color: #f8f8f8;
   border: 1px solid #ddd;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.chunk-text {
+  background: #f2f2f2;
   padding: 15px;
-  font-family: Consolas, monospace;
-  font-size: 14px;
-  white-space: pre-wrap; /* Wrap long lines */
-  border-radius: 5px;
-  max-height: 300px;
-  overflow-y: auto;
+  border-radius: 8px;
   margin-bottom: 20px;
 }
 
-/* Tables */
-.styled-table {
-  border-collapse: collapse;
-  width: 100%;
-  margin-bottom: 30px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  font-size: 0.95rem;
-}
-
-.styled-table th,
-.styled-table td {
-  border: 1px solid #ccc;
-  padding: 10px 15px;
-  text-align: left;
-}
-
-.styled-table th {
-  background-color: #007acc;
-  color: white;
-  font-weight: 600;
-}
-
-.styled-table tbody tr:nth-child(even) {
-  background-color: #f2f7fb;
-}
-
-.styled-table tbody tr:hover {
-  background-color: #d1e7ff;
-  cursor: default;
-}
-
-/* Lists */
-ul {
-  list-style-type: disc;
-  margin-left: 20px;
-  color: #444;
-}
-
-li strong {
-  color: #007acc;
-}
-
-.loading-message {
-  color: #444;
-  font-weight: bold;
-  font-size: 1.2rem;
-  padding: 16px;
+.qna-panel {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 15px;
 }
 
-.spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #4a90e2;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  animation: spin 1s linear infinite;
+.question-input {
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  width: 100%;
 }
 
-/**************latest css************/
-
-
-
-/********************************/
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.ask-button {
+  padding: 12px 24px;
+  background-color: #007bff;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s ease;
 }
 
+.ask-button:hover {
+  background-color: #0056b3;
+}
 
-/* Responsive tweak for small screens */
-@media (max-width: 600px) {
-  .container {
-    padding: 0 10px;
-  }
+.answer {
+  margin-top: 10px;
+  padding: 12px;
+  background: #eef7ff;
+  border-radius: 8px;
+}
 
-  button {
-    width: 100%;
-  }
+.structured-section {
+  margin-top: 40px;
+}
+
+.card {
+  padding: 20px;
+  margin-bottom: 20px;
+  background: #fefefe;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  border-radius: 10px;
 }
