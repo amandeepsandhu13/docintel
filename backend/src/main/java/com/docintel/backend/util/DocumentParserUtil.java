@@ -1,33 +1,38 @@
 package com.docintel.backend.util;
 
-import com.docintel.backend.dto.KeyValue;
-import com.docintel.backend.dto.SimpleAnalysisResult;
-import com.docintel.backend.dto.Table;
+import com.docintel.backend.dto.*;
+import com.docintel.backend.service.UnstructuredEntityExtractionService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.regex.Pattern;
-
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+@Service
 public class DocumentParserUtil {
-    public static SimpleAnalysisResult parse(String json) throws Exception {
+
+    private final UnstructuredEntityExtractionService entityExtractionService;
+
+    @Autowired
+    public DocumentParserUtil(UnstructuredEntityExtractionService entityExtractionService) {
+        this.entityExtractionService = entityExtractionService;
+    }
+
+    public SimpleAnalysisResult parse(String json) throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode root = objectMapper.readTree(json);
         JsonNode analyzeResult = root.path("analyzeResult");
 
-        // Null/Empty check for analyzeResult
         if (analyzeResult.isMissingNode() || analyzeResult.isEmpty()) {
             throw new IllegalArgumentException("Missing 'analyzeResult' in response.");
         }
 
         String content = analyzeResult.path("content").asText("");
-        String fullContent = analyzeResult.path("content").asText("");
-
 
         Set<String> extractedValues = new HashSet<>();
 
-        // Key-Value Pair Parsing (Refined with cleaner)
+        // Parse key-value pairs
         List<KeyValue> keyValues = new ArrayList<>();
         Set<String> kvSeen = new HashSet<>();
         JsonNode kvPairsNode = analyzeResult.path("keyValuePairs");
@@ -52,7 +57,7 @@ public class DocumentParserUtil {
             }
         }
 
-        // Parse tables safely
+        // Parse tables
         List<Table> tables = new ArrayList<>();
         JsonNode tablesNode = analyzeResult.path("tables");
 
@@ -85,28 +90,28 @@ public class DocumentParserUtil {
             }
         }
 
-// Safer unstructured content removal using regex with word boundaries and case-insensitive matching
+        // Build unstructured content
         String unstructuredContent = content;
         for (String val : extractedValues) {
             unstructuredContent = unstructuredContent.replace(val, "");
         }
-        unstructuredContent = unstructuredContent.trim();
-
-
         unstructuredContent = unstructuredContent.replaceAll("\\s+", " ").trim();
 
-        // Final DTO
+        // Final result DTO
         SimpleAnalysisResult result = new SimpleAnalysisResult();
         result.setContent(content);
         result.setKeyValuePairs(keyValues);
         result.setTables(tables);
         result.setUnstructuredContent(unstructuredContent);
 
+        // ✅ Call your enrichment module
+        ExtractedEntities entities = entityExtractionService.extractEntities(unstructuredContent);
+        result.setExtractedEntities(entities);
+
         return result;
     }
 
-    // Reusable cleaner for key/value text
-    private static String cleanText(String raw, boolean isKey) {
+    private String cleanText(String raw, boolean isKey) {
         if (raw == null) return null;
         return isKey ? raw.trim().replaceAll("[:\\-\\s]+$", "") :
                 raw.trim().replaceAll("^[:\\-\\s]+", "");
