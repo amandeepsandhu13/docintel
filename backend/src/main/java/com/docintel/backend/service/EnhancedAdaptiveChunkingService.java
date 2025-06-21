@@ -26,24 +26,41 @@ public class EnhancedAdaptiveChunkingService {
         return mergeSimilarChunks(initialChunks);
     }
 
-    // Step 1: Improved initial split
+    // Step 1: Improved initial split with auto-labeling
     private List<Chunk> initialSplit(String content) {
         List<Chunk> chunks = new ArrayList<>();
         int index = 0;
 
-        // Split into sentences based on period, exclamation or question mark.
-        String[] sentences = content.split("(?<=[.?!])\\s+");
+        // Split into sentences and sections
+        String[] parts = content.split("(?=\\n?\\d+\\.\\s)|(?<=\\.)\\s+");
 
-        for (String sentence : sentences) {
-            String trimmed = sentence.trim();
-
-            // Accept any meaningful sentence with at least 10 characters
+        for (String part : parts) {
+            String trimmed = part.trim();
             if (trimmed.length() >= 10 && trimmed.matches(".*[a-zA-Z].*")) {
-                chunks.add(new Chunk(index++, trimmed));
+                Chunk chunk = new Chunk(index++, trimmed);
+                chunk.setSectionTitle(extractHeading(trimmed));  // Auto label assigned here
+                chunks.add(chunk);
             }
         }
 
         return chunks;
+    }
+
+    // Extract possible heading/section title
+    private String extractHeading(String text) {
+        if (text.matches("^\\d+\\.\\s+[A-Za-z ]+.*")) {
+            // E.g. "1. Scope of Services ..."
+            String[] splitParts = text.split("\\.\\s+", 2);
+            if (splitParts.length > 1) {
+                String possibleTitle = splitParts[1].split("\\n")[0];
+                if (possibleTitle.length() > 50) {
+                    possibleTitle = possibleTitle.substring(0, 50) + "...";
+                }
+                return possibleTitle;
+            }
+        }
+        // fallback generic title
+        return "Section";
     }
 
     // Step 2: Merge highly similar short chunks based on semantic similarity

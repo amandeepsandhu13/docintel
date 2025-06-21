@@ -50,6 +50,16 @@ export class DocUploadComponent {
       next: (result) => {
         this.analysisResult = result;
         this.loading = false;
+              // Select first chunk automatically if available
+              if (result.chunks && result.chunks.length > 0) {
+                this.selectedChunk = result.chunks[0];
+              } else {
+                this.selectedChunk = null;
+              }
+
+              // Reset question/answer for new document
+              this.question = '';
+              this.answer = '';
       },
       error: () => this.loading = false
     });
